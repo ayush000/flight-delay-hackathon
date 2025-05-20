@@ -1,0 +1,32 @@
+{
+  "name": "flight-delay-hackathon",
+  "version": "1.0.0",
+  "description": "<!-- REPLACE THE TITLE WITH THE NAME OF THE EXERCISE -->",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "tsx server/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ayush000/flight-delay-hackathon.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ayush000/flight-delay-hackathon/issues"
+  },
+  "homepage": "https://github.com/ayush000/flight-delay-hackathon#readme",
+  "dependencies": {
+    "@types/express": "^5.0.2",
+    "@types/node": "^22.15.19",
+    "express": "^5.1.0",
+    "typescript": "^5.8.3"
+  },
+  "type": "module",
+  "devDependencies": {
+    "tsx": "^4.19.4"
+  }
+}
