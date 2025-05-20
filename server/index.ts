@@ -34,43 +34,64 @@ app.get('/', (req, res) => {
   res.send('Hello from TypeScript server!');
 });
 
+// Helper to validate dayOfWeek
+function isValidDayOfWeek(dayOfWeek: string): boolean {
+  const day = Number(dayOfWeek);
+  return Number.isInteger(day) && day >= 1 && day <= 7;
+}
+
+// Helper to validate airportId
+function isValidAirportId(airportId: string): boolean {
+  const airport = Number(airportId);
+  return Number.isInteger(airport) && airport > 0;
+}
+
+// Helper to check if airportId exists
+function airportIdExists(airportId: string): boolean {
+  return airportIdSet.has(airportId);
+}
+
+// Helper to run the Python prediction script
+function runPredictionScript(dayOfWeek: string, airportId: string, callback: (err: Error | null, result?: any) => void) {
+  const scriptPath = path.join(__dirname, 'predict.py');
+  const py = spawn('python3', [scriptPath, dayOfWeek, airportId]);
+  let dataOut = '';
+  py.stdout.on('data', (chunk) => {
+    dataOut += chunk.toString();
+  });
+  py.on('close', () => {
+    try {
+      const result = JSON.parse(dataOut);
+      callback(null, result);
+    } catch (e) {
+      callback(new Error('Invalid response from Python script'));
+    }
+  });
+}
+
 // Endpoint to predict flight delay chance and confidence
 app.get('/predict', (req, res) => {
   const dayOfWeek = String(req.query.dayOfWeek ?? '');
   const airportId = String(req.query.airportId ?? '');
 
-  // Validate dayOfWeek and airportId
-  const day = Number(dayOfWeek);
-  const airport = Number(airportId);
-  if (!Number.isInteger(day) || day < 1 || day > 7) {
+  if (!isValidDayOfWeek(dayOfWeek)) {
     res.status(400).json({ error: 'Invalid dayOfWeek. Must be integer 1-7.' });
     return;
   }
-  if (!Number.isInteger(airport) || airport <= 0) {
+  if (!isValidAirportId(airportId)) {
     res.status(400).json({ error: 'Invalid airportId. Must be a positive integer.' });
     return;
   }
-  if (!airportIdSet.has(airportId)) {
+  if (!airportIdExists(airportId)) {
     res.status(400).json({ error: 'airportId not found in airports list.' });
     return;
   }
 
-  const scriptPath = path.join(__dirname, 'predict.py');
-  const py = spawn('python3', [scriptPath, dayOfWeek, airportId]);
-
-  let dataOut = '';
-  py.stdout.on('data', (chunk) => {
-    dataOut += chunk.toString();
-  });
-
-  py.on('close', () => {
-    try {
-      const result = JSON.parse(dataOut);
+  runPredictionScript(dayOfWeek, airportId, (err, result) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+    } else {
       res.json(result);
-    } catch (e) {
-      console.error('Error parsing JSON:', e);
-      console.error('Raw data:', dataOut);
-      res.status(500).json({ error: 'Invalid response from Python script' });
     }
   });
 });
