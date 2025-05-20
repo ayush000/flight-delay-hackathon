@@ -14,24 +14,24 @@ export default component$(() => {
   const selectedDay = useSignal("");
   const selectedAirport = useSignal("");
   const airports = useSignal<Array<{ AirportID: string; AirportName: string }>>([]);
+  const result = useSignal<string | null>(null);
 
   useTask$(async () => {
     const res = await fetch("/airports");
-    console.log('res');
-    console.log(res);
 
     if (res.ok) {
       airports.value = await res.json();
     }
   });
 
-  const handleClick = $(() => {
-    // Log airport ID and selected day of week (1-7)
-    // eslint-disable-next-line no-console
-    console.log({
-      airportId: selectedAirport.value,
+  const handleClick = $(async () => {
+    const params = new URLSearchParams({
       dayOfWeek: selectedDay.value,
+      airportId: selectedAirport.value,
     });
+    const res = await fetch(`/predict?${params.toString()}`);
+    const data = await res.json();
+    result.value = JSON.stringify(data);
   });
 
   return (
@@ -75,6 +75,12 @@ export default component$(() => {
         >
           Predict
         </button>
+        {result.value && (
+          <div class="mt-6 p-4 bg-gray-100 rounded text-gray-800 break-all">
+            <strong>Prediction Result:</strong>
+            <pre>{result.value}</pre>
+          </div>
+        )}
       </div>
     </div>
   );
